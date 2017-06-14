@@ -100,7 +100,7 @@ def main():
 
     updater = Updater(TOKEN)
     updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
-    updater.bot.set_webhook("https://filmaffinitybot.herokuapp.com/" + TOKEN)
+    updater.bot.set_webhook("https://nextepisodebot.herokuapp.com/" + TOKEN)
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
