@@ -3,14 +3,26 @@ import os
 import requests
 import re
 import telegram
+import datetime
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from botanio import botan
 import logging
+import goslate
+import json
+import urllib2
+from pytz import timezone
+from dateutil import parser
 
+with open('language/translations.json') as json_data:
+    translations = json.load(json_data)
+
+gs = goslate.Goslate()
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+BOTAN_TOKEN = os.environ.get('BOTAN_TOKEN')
 
 
 class TvmazeService(object):
@@ -51,35 +63,64 @@ class TvmazeService(object):
 
 
 def start(bot, update):
-    update.message.reply_text('Hi! This bot')
+    lang = update.message.from_user.language_code[:2]
+    lang = 'en' if lang != 'es' else lang
+    text = translations['start'][lang]
+    update.message.reply_text(text)
 
 
 def help(bot, update):
-    update.message.reply_text('Help')
+    lang = update.message.from_user.language_code[:2]
+    lang = 'en' if lang != 'es' else lang
+    text = translations['help'][lang]
+    update.message.reply_text(text)
+
+
+def print_episode(text, episode, lang, type_episode):
+    if episode:
+        date = convert_to_datetime(episode['airstamp'])
+        episode['airtime'] = date.strftime("%H:%M")
+        if lang == 'es':
+            date = convert_to_timezone(date)
+            episode['airdate'] = date.strftime("%d-%m-%Y")
+            episode['airtime'] = date.strftime("%H:%M")
+        text += translations[type_episode][lang].format(**episode)
+        if episode['summary']:
+            summary = remove_tag(episode['summary'])
+            if lang != 'en':
+                try:
+                    summary = gs.translate(summary, lang)
+                except urllib2.HTTPError:
+                    pass
+            text += summary
+        if type_episode == 'next_episode':
+            date_str = episode['airdate'] + ' ' + episode['airtime']
+            date_time = datetime.datetime.strptime(date_str, "%d-%m-%Y %H:%M")
+            delta = date_time - datetime.datetime.now()
+            if delta.days:
+                text += translations['left'][lang].format(days=delta.days)
+        text += '\n \n'
+    return text
 
 
 def echo(bot, update):
+    uid = update.message.from_user
+    message_dict = update.message.to_dict()
+    event_name = update.message.text
+    botan.track(BOTAN_TOKEN, uid, message_dict, event_name)
+    lang = update.message.from_user.language_code[:2]
+    lang = 'en' if lang != 'es' else lang
     service = TvmazeService()
     text = ''
     serie = service.next_episode(update.message.text)
     if serie:
-        text += "<b> %s </b>" % serie['name']
-        text += "Status: %s \n \n" % serie['status']
+        if lang == 'es':
+            serie['status'] = translations[serie['status']][lang]
+        text += translations['title'][lang].format(name=serie['name'], status=serie['status'])
         next_episode = serie.get('next', None)
         previous_episode = serie.get('previous', None)
-        if previous_episode:
-            text += "The last episode: <b>%sx%s %s</b> \n" % (previous_episode['season'], previous_episode['number'], previous_episode['name'])
-            text += "Date: <b>%s %s</b> \n" % (str(previous_episode['airdate']), str(previous_episode['airtime']))
-            if previous_episode['summary']:
-                summary = remove_tag(previous_episode['summary'])
-                text += summary
-            text += '\n \n'
-        if next_episode:
-            text += "The next episode: <b>%sx%s %s</b> \n" % (next_episode['season'], next_episode['number'], next_episode['name'])
-            text += "Date: <b>%s %s</b> \n" % (str(next_episode['airdate']), str(next_episode['airtime']))
-            if next_episode['summary']:
-                summary = remove_tag(next_episode['summary'])
-                text += summary
+        text = print_episode(text, previous_episode, lang, 'last_episode')
+        text = print_episode(text, next_episode, lang, 'next_episode')
     else:
         text += "Not found."
     bot.send_message(
@@ -101,7 +142,7 @@ def main():
     updater = Updater(TOKEN)
     updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
     updater.bot.set_webhook("https://nextepisodebot.herokuapp.com/" + TOKEN)
-    # Get the dispatcher to register handlers
+    # # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
     # on different commands - answer in Telegram
@@ -126,6 +167,14 @@ def main():
 def remove_tag(text):
     TAG_RE = re.compile(r'<[^>]+>')
     return TAG_RE.sub('', text)
+
+
+def convert_to_timezone(date_time):
+    return date_time.astimezone(timezone('Europe/Madrid'))
+
+
+def convert_to_datetime(date):
+    return parser.parse(date)
 
 if __name__ == '__main__':
     main()

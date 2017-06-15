@@ -1,0 +1,38 @@
+{
+    "last_episode": {
+        "es": "Ultimo episodio: <b>{season}x{number} {name}</b> \nFecha: <b> {airdate} {airtime}</b> \n",
+        "en": "The last episode: <b>{season}x{number} {name}</b> \nDate: <b> {airdate} {airtime}</b> \n"
+    },
+    "next_episode": {
+        "es": "Siguiente episodio: <b>{season}x{number} {name}</b> \n Fecha: <b> {airdate} {airtime}</b> \n",
+        "en": "Next episode: <b>{season}x{number} {name}</b> \n Date: <b> {airdate} {airtime}</b> \n"
+    },
+    "title": {
+        "es": "<b> {name} </b> \nEstado: <b> {status}</b>\n\n",
+        "en": "<b> {name} </b> \nStatus: <b> {status}</b>\n\n"
+    },
+    "Running": {
+        "es": "En proceso",
+        "en": "Running"
+    },
+    "To Be Determined": {
+        "es": "Sin determinar",
+        "en": "To Be Determined"
+    },
+    "Ended": {
+        "es": "Finalizada",
+        "en": "Ended"
+    },
+    "left": {
+        "es": "\n¡Quedan {days} dias!",
+        "en": "\n {days} days left!"
+    },
+    "start": {
+        "es": "¡Hola! Con tan solo escribir el nombre de una serie este bot te ayudara conocer la fecha del proximo capitulo",
+        "en": "Hello! Write the name of a series this bot will help you know the date of the next episode"
+    },
+    "help": {
+        "es": "Tan solo debes de escribir el nombre de una serie. Ejemplo: Game of Thrones",
+        "en": "You just have to write the name of a series. Example: Game of Thrones"
+    }
+}
