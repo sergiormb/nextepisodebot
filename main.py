@@ -77,6 +77,7 @@ def echo(bot, update):
     service = TvmazeService()
     text = ''
     serie = service.next_episode(update.message.text)
+    serie_active = False
     if serie:
         serie_active = True if serie['status'] != 'Ended' else False
         if lang == 'es':
