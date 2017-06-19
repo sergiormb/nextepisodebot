@@ -25,7 +25,7 @@ def schedule_day():
                     text = '<b> HOY: %s</b>\n' % show['name']
                     network = show.get('network', None)
                     if network:
-                        text += '%s - %s' % (network['name'], network['country']['name'])
+                        text += '%s - %s\n' % (network['name'], network['country']['name'])
                     text = print_episode(text, episode, 'es', 'next_episode')
                     bot.send_message(
                         chat_id=result,
