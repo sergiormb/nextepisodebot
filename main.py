@@ -91,7 +91,7 @@ def echo(bot, update):
             text = print_episode(text, next_episode, lang, 'next_episode')
         else:
             if serie_active:
-                text += translations[serie['serie_active']][lang]
+                text += translations['serie_active'][lang]
     else:
         text += "Not found."
     if serie_active:
