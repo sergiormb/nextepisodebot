@@ -34,5 +34,9 @@
     "help": {
         "es": "Tan solo debes de escribir el nombre de una serie. Ejemplo: Game of Thrones",
         "en": "You just have to write the name of a series. Example: Game of Thrones"
+    },
+    "not_subscriptions": {
+        "es": "Lo siento aún no te has subscrito a ninguna serie",
+        "en": "Sorry you have not subscribed to any series yet"
     }
 }

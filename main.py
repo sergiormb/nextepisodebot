@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import requests
 import re
 import telegram
@@ -7,22 +6,22 @@ import datetime
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from botanio import botan
 import logging
-import goslate
 import json
 import urllib2
 from pytz import timezone
 from dateutil import parser
+import config
+import database
 
 with open('language/translations.json') as json_data:
     translations = json.load(json_data)
 
-gs = goslate.Goslate()
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-BOTAN_TOKEN = os.environ.get('BOTAN_TOKEN')
 
 
 class TvmazeService(object):
@@ -89,7 +88,7 @@ def print_episode(text, episode, lang, type_episode):
             summary = remove_tag(episode['summary'])
             if lang != 'en':
                 try:
-                    summary = gs.translate(summary, lang)
+                    summary = config.gs.translate(summary, lang)
                 except urllib2.HTTPError:
                     pass
             text += summary
@@ -107,7 +106,7 @@ def echo(bot, update):
     uid = update.message.from_user
     message_dict = update.message.to_dict()
     event_name = update.message.text
-    botan.track(BOTAN_TOKEN, uid, message_dict, event_name)
+    botan.track(config.BOTAN_TOKEN, uid, message_dict, event_name)
     lang = update.message.from_user.language_code[:2]
     lang = 'en' if lang != 'es' else lang
     service = TvmazeService()
@@ -130,24 +129,36 @@ def echo(bot, update):
     )
 
 
+def subscriptions(bot, update):
+    lang = update.message.from_user.language_code[:2]
+    lang = 'en' if lang != 'es' else lang
+    uid = update.message.from_user
+    subscriptions = database.get_subscriptions(uid.id)
+    if not subscriptions:
+        text = translations['not_subscriptions'][lang]
+        update.message.reply_text(text)
+    else:
+        update.message.reply_text(subscriptions)
+
+
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
 
 def main():
-    TOKEN = os.environ.get('TOKEN')
-    PORT = int(os.environ.get('PORT', '5000'))
     # Create the Updater and pass it your bot's token.
-
-    updater = Updater(TOKEN)
-    updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
-    updater.bot.set_webhook("https://nextepisodebot.herokuapp.com/" + TOKEN)
+    database.create_tables()
+    updater = Updater(config.TOKEN)
+    if config.PORT:
+        updater.start_webhook(listen="0.0.0.0", port=config.PORT, url_path=config.TOKEN)
+        updater.bot.set_webhook("https://nextepisodebot.herokuapp.com/" + config.TOKEN)
     # # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("subscriptions", subscriptions))
 
     # on noncommand i.e message - echo the message on Telegram
     dp.add_handler(MessageHandler(Filters.text, echo))
