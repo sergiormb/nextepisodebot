@@ -4,11 +4,11 @@ import telegram
 from telegram.bot import Bot
 import config
 import database
+from time import sleep
 
 sched = BlockingScheduler()
 
 
-@sched.scheduled_job('interval', minutes=3)
 def schedule_day():
     service = TvmazeService()
     series = service.schedule()
@@ -24,3 +24,8 @@ def schedule_day():
             )
 
 sched.start()
+
+job = sched.add_job(schedule_day, day_of_week='mon-sun', hour=18, minute=30)
+
+while True:
+    sleep(1)
