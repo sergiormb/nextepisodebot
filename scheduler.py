@@ -4,7 +4,9 @@ import telegram
 from telegram.bot import Bot
 import config
 import database
-
+import logging
+logging.basicConfig()
+logger = logging.getLogger(__name__)
 sched = BlockingScheduler()
 
 
