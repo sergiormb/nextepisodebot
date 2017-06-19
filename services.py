@@ -22,7 +22,7 @@ class TvmazeService(object):
         series = []
         for country in COUNTRIES:
             response = requests.get(url.format(country=country))
-            series.append(response.json)
+            series.extend(response.json())
         return series
 
     def _next_episode(self, id):
