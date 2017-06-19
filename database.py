@@ -54,7 +54,6 @@ def insert_register(user_id, serie_id, chat_id, serie_name):
         # create a new cursor
         cur = conn.cursor()
         # execute the INSERT statement
-        import ipdb; ipdb.set_trace()
         cur.execute(sql, (user_id, serie_id, chat_id, serie_name))
         # get the generated id back
         response = cur.fetchone()[0]
