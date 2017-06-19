@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 sched = BlockingScheduler()
 
 
-@sched.scheduled_job('interval', minutes=1)
+@sched.scheduled_job('cron', hour=12)
 def schedule_day():
     service = TvmazeService()
     episodes = service.schedule()
@@ -23,6 +23,9 @@ def schedule_day():
                 results = database.get_registers(show['id'])
                 for result in results:
                     text = '<b> HOY: %s</b>\n' % show['name']
+                    network = show.get('network', None)
+                    if network:
+                        text += '%s - %s' % (network['name'], network['country']['name'])
                     text = print_episode(text, episode, 'es', 'next_episode')
                     bot.send_message(
                         chat_id=result,
@@ -31,5 +34,8 @@ def schedule_day():
                     )
                     if episode.get('image', None):
                         bot.send_photo(chat_id=result, photo=episode['image'])
+
+if __name__ == '__main__':
+    schedule_day()
 
 sched.start()
