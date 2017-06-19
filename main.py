@@ -1,64 +1,25 @@
 # -*- coding: utf-8 -*-
-import requests
-import re
 import telegram
 import datetime
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from botanio import botan
 import logging
 import json
 import urllib2
-from pytz import timezone
-from dateutil import parser
+
 import config
 import database
+from services import TvmazeService
+from utils import remove_tag, convert_to_timezone, convert_to_datetime
 
 with open('language/translations.json') as json_data:
     translations = json.load(json_data)
-
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-
-
-class TvmazeService(object):
-
-    def __init__(self):
-        self.base_url = 'http://api.tvmaze.com/'
-        self.url_search = self.base_url + 'singlesearch/shows'
-        self.url_serie = self.base_url + 'shows/'
-
-    def _search(self, q):
-        json = None
-        url = self.url_search + '?q=' + q
-        response = requests.get(url)
-        if response.status_code == 200:
-            json = response.json()
-        return json
-
-    def _next_episode(self, id):
-        url = self.url_serie + str(id) + '?embed[]=nextepisode&embed[]=previousepisode'
-        nextepisode = None
-        response = requests.get(url)
-        if response.status_code == 200:
-            json = response.json()
-            nextepisode = json
-            embedded = json.get('_embedded', None)
-            if embedded.get('nextepisode'):
-                nextepisode.update({'next': embedded['nextepisode']})
-            else:
-                nextepisode.update({'error': 'We do not have episode information right now.'})
-            nextepisode.update({'previous': embedded['previousepisode']})
-        return nextepisode
-
-    def next_episode(self, q):
-        next_episode = self._search(q)
-        if next_episode:
-            next_episode = self._next_episode(next_episode['id'])
-        return next_episode
 
 
 def start(bot, update):
@@ -113,6 +74,7 @@ def echo(bot, update):
     text = ''
     serie = service.next_episode(update.message.text)
     if serie:
+        serie_active = True if serie['status'] != 'Ended' else False
         if lang == 'es':
             serie['status'] = translations[serie['status']][lang]
         text += translations['title'][lang].format(name=serie['name'], status=serie['status'])
@@ -122,9 +84,21 @@ def echo(bot, update):
         text = print_episode(text, next_episode, lang, 'next_episode')
     else:
         text += "Not found."
+    if serie_active:
+        search = database.search(update.message.from_user.id, serie['id'])
+        if not search:
+            button_list = [[
+                telegram.InlineKeyboardButton(text=translations['subscribe'][lang], callback_data=str(serie['id'])),
+            ]]
+        else:
+            button_list = [[
+                telegram.InlineKeyboardButton(text=translations['unsubscribe'][lang], callback_data=str('baja' + str(serie['id']))),
+            ]]
+        reply_markup = telegram.InlineKeyboardMarkup(button_list)
     bot.send_message(
         chat_id=update.message.chat_id,
         text=text,
+        reply_markup=reply_markup,
         parse_mode=telegram.ParseMode.HTML
     )
 
@@ -136,13 +110,52 @@ def subscriptions(bot, update):
     subscriptions = database.get_subscriptions(uid.id)
     if not subscriptions:
         text = translations['not_subscriptions'][lang]
-        update.message.reply_text(text)
     else:
-        update.message.reply_text(subscriptions)
+        text = translations['subscriptions'][lang]
+        for subscription in subscriptions:
+            text += "- %s\n" % subscription
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text=text,
+        parse_mode=telegram.ParseMode.HTML
+    )
 
 
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
+
+
+def new_subscription(bot, update):
+    lang = update.callback_query.from_user.language_code[:2]
+    lang = 'en' if lang != 'es' else lang
+    service = TvmazeService()
+    query = update.callback_query
+    user_id = update.callback_query.from_user.id
+    serie_id = query['data']
+    if 'baja' in serie_id:
+        serie_baja = serie_id.split('baja')
+        serie_id = int(serie_baja[1])
+        search = database.search(user_id, serie_id)
+        if search:
+            remove = database.remove_register(user_id, serie_id)
+            if remove:
+                text = translations['remove_subscription'][lang]
+            else:
+                text = 'ERROR'
+    else:
+        serie_id = int(serie_id)
+        serie = service._next_episode(serie_id)
+        serie_name = serie['name']
+        search = database.search(user_id, serie_id)
+        if not search:
+            register = database.insert_register(user_id, serie_id, update.effective_chat.id, serie_name)
+            if register:
+                text = translations['new_subscription'][lang].format(serie=serie_name)
+            else:
+                text = 'ERROR'
+        else:
+            text = translations['already_subscribed'][lang]
+    bot.answerCallbackQuery(query.id, text=text)
 
 
 def main():
@@ -158,6 +171,7 @@ def main():
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CallbackQueryHandler(new_subscription))
     dp.add_handler(CommandHandler("subscriptions", subscriptions))
 
     # on noncommand i.e message - echo the message on Telegram
@@ -174,18 +188,6 @@ def main():
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
-
-def remove_tag(text):
-    TAG_RE = re.compile(r'<[^>]+>')
-    return TAG_RE.sub('', text)
-
-
-def convert_to_timezone(date_time):
-    return date_time.astimezone(timezone('Europe/Madrid'))
-
-
-def convert_to_datetime(date):
-    return parser.parse(date)
 
 if __name__ == '__main__':
     main()

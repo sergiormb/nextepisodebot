@@ -11,9 +11,18 @@ if BOTAN_TOKEN:
     urlparse.uses_netloc.append("postgres")
     url = urlparse.urlparse(os.environ["DATABASE_URL"])
     params = {
-        "hostname": url.hostname,
+        "host": url.hostname,
         "port": url.port,
-        "username": url.username,
+        "user": url.username,
         "password": url.password,
         "database": url.path[1:],
+    }
+
+else:
+    PORT = None
+    params = {
+        "host": "localhost",
+        "user": "admin",
+        "password": "admin",
+        "database": "nextepisodebot",
     }

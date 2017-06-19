@@ -38,5 +38,29 @@
     "not_subscriptions": {
         "es": "Lo siento aún no te has subscrito a ninguna serie",
         "en": "Sorry you have not subscribed to any series yet"
+    },
+    "already_subscribed": {
+        "es": "Ya estas subscrito a esta serie",
+        "en": "You are already subscribed"
+    },
+    "remove_subscription": {
+        "es": "Subscripcion borrada",
+        "en": "Unsubscribed"
+    },
+    "new_subscription": {
+        "es": "Ahora recibira notificaciones del siguiente episodio de {serie}",
+        "en": "Now we will notify you the next episode of {serie}"
+    },
+    "subscribe": {
+        "es": "¡Subscribirte!",
+        "en": "Subscribe!"
+    },
+    "unsubscribe": {
+        "es": "Dar de baja",
+        "en": "Unsubscribe"
+    },
+    "subscriptions": {
+        "es": "<b>Subscripciones</b>\n\n",
+        "en": "<b>Subscriptions</b>\n\n"
     }
 }
