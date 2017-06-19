@@ -87,7 +87,11 @@ def echo(bot, update):
         next_episode = serie.get('next', None)
         previous_episode = serie.get('previous', None)
         text = print_episode(text, previous_episode, lang, 'last_episode')
-        text = print_episode(text, next_episode, lang, 'next_episode')
+        if next_episode:
+            text = print_episode(text, next_episode, lang, 'next_episode')
+        else:
+            if serie_active:
+                text += translations[serie['serie_active']][lang]
     else:
         text += "Not found."
     if serie_active:

@@ -62,5 +62,9 @@
     "subscriptions": {
         "es": "<b>Subscripciones</b>\n\n",
         "en": "<b>Subscriptions</b>\n\n"
+    },
+    "serie_active": {
+        "es": "<b>No hay fecha confirmada para el siguiente capitulo</b>\n\n",
+        "en": "<b>There is no confirmed date for the next episode</b>\n\n"
     }
 }
