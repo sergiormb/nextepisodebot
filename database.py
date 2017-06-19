@@ -102,6 +102,7 @@ def remove_register(user_id, serie_id):
 def get_registers(serie_id):
     conn = None
     result = []
+    serie_id = int(serie_id)
     try:
         # read the connection parameters
         params = config.params
