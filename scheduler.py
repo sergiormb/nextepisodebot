@@ -35,7 +35,4 @@ def schedule_day():
                     if episode.get('image', None):
                         bot.send_photo(chat_id=result, photo=episode['image'])
 
-if __name__ == '__main__':
-    schedule_day()
-
 sched.start()
