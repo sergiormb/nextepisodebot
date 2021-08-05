@@ -15,7 +15,7 @@ from utils import remove_tag, convert_to_timezone, convert_to_datetime
 import sys
 
 reload(sys)
-sys.setdefaultencoding('utf8')
+
 
 with open('language/translations.json') as json_data:
     translations = json.load(json_data)
