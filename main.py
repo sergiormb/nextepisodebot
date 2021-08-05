@@ -5,7 +5,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 from botanio import botan
 import logging
 import json
-import urllib2
+import urllib
 
 import config
 import database
@@ -54,7 +54,7 @@ def print_episode(text, episode, lang, type_episode):
             if lang != 'en':
                 try:
                     summary = config.gs.translate(summary, lang)
-                except urllib2.HTTPError:
+                except urllib.exceptions.HTTPError:
                     pass
             text += summary
         if type_episode == 'next_episode':
