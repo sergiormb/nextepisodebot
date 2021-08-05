@@ -6,6 +6,7 @@ from botanio import botan
 import logging
 import json
 import urllib
+from importlib import reload
 
 import config
 import database
