@@ -1,4 +1,4 @@
-import urlparse
+import urllib.parse
 import goslate
 import os
 
@@ -8,8 +8,8 @@ BOTAN_TOKEN = os.environ.get("BOTAN_TOKEN", None)
 
 if BOTAN_TOKEN:
     PORT = int(os.environ.get("PORT", "5000"))
-    urlparse.uses_netloc.append("postgres")
-    url = urlparse.urlparse(os.environ["DATABASE_URL"])
+    urllib.parse.uses_netloc.append("postgres")
+    url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
     params = {
         "host": url.hostname,
         "port": url.port,
